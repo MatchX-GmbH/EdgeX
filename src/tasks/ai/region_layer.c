@@ -382,6 +382,9 @@ void region_layer_run(region_layer_t *rl, obj_info_t *obj_info)
 
 extern uint8_t ai_person_count;
 
+#include "config.h"
+#include "gpio_common.h"
+
 void region_layer_draw_boxes(region_layer_t *rl, callback_draw_box callback)
 {
     uint32_t image_width = rl->image_width;
@@ -399,9 +402,6 @@ void region_layer_draw_boxes(region_layer_t *rl, callback_draw_box callback)
         {
             count++;
             box_t *b = boxes + i;
-
-            // flip axis
-            b->y = 1 - b->y;
 
             uint32_t x1 = b->x * image_width - (b->w * image_width / 2);
             uint32_t y1 = b->y * image_height - (b->h * image_height / 2);

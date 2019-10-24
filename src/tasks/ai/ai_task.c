@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "w25qxx.h"
 #include "dvp.h"
 #include "sysctl.h"
 #include "fpioa.h"
@@ -23,7 +24,9 @@
 #endif
 
 #define CLASS_NUMBER 20
-INCBIN(model, "/home/kuba/sw/ai-node-fw-stdln/src/tasks/ai/yolo.kmodel");
+//INCBIN(model, "/home/kuba/sw/ai-node-fw-stdln/src/tasks/ai/yolo.kmodel");
+#define MODEL_SIZE (1400 * 1024) // 1.4 MB
+uint8_t model_data[MODEL_SIZE];
 
 kpu_model_context_t task;
 static region_layer_t detect_rl;
@@ -191,28 +194,29 @@ static void drawboxes(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32
     y2 = 239;
 
   lcd_draw_rectangle(x1, y1, x2, y2, 2, class_label[class].color);
-  //lcd_draw_picture(x1 + 1, y1 + 1, class_label[class].width, class_label[class].height, class_label[class].ptr);
+  lcd_draw_picture(x1 + 1, y1 + 1, class_label[class].width, class_label[class].height, class_label[class].ptr);
 }
 
 void ai_task(void){
-  io_mux_init();
-  io_set_power();
-  label_init();
+    io_mux_init();
+    io_set_power();
+    label_init();
+
+    printf("Load neural network\n");
+    w25qxx_init(3, 0);
+    w25qxx_enable_quad_mode();
+    w25qxx_read_data(0x800000, model_data, MODEL_SIZE, W25QXX_QUAD_FAST);
 
 
-  /* LCD init */
+    /* LCD init */
     printf("LCD init\n");
     lcd_init();
-#if BOARD_LICHEEDAN
-    lcd_set_direction(DIR_YX_RLDU);
-#else
-    lcd_set_direction(DIR_YX_RLUD);
-#endif
+    lcd_set_direction(DIR_YX_LRDU);
     lcd_clear(BLACK);
     lcd_draw_string(136, 70, "DEMO 1", WHITE);
+
     /* DVP init */
     printf("DVP init\n");
-
     #if OV5640
     dvp_init(16);
     dvp_set_xclk_rate(50000000);
@@ -263,7 +267,7 @@ void ai_task(void){
 
     detect_rl.anchor_number = ANCHOR_NUM;
     detect_rl.anchor = g_anchor;
-    detect_rl.threshold = 0.7;
+    detect_rl.threshold = 0.4;
     detect_rl.nms_value = 0.3;
     region_layer_init(&detect_rl, 10, 7, 125, 320, 240);
 
@@ -289,17 +293,6 @@ void ai_task(void){
         /* display pic*/
         uint32_t * lcd_gram = g_ram_mux ? g_lcd_gram0 : g_lcd_gram1;
         uint8_t * lcd_gram_ = (uint8_t*)lcd_gram;
-
-        /* flip the display */
-        const int line = 320 * 2;
-        uint8_t buf[line];
-        for(int i = 0; i < 120; i++){
-          uint8_t * upper = lcd_gram_ + (i*line);
-          uint8_t * lower = lcd_gram_ + ((239-i)*line);
-          memcpy(buf, upper, line);
-          memcpy(upper, lower, line);
-          memcpy(lower, buf, line);
-        }
 
         g_ram_mux ^= 0x01;
         lcd_draw_picture(0, 0, 320, 240, lcd_gram);

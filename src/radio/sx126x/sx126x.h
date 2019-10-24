@@ -25,6 +25,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "board.h"
+
 
 #define SX1261                                      1
 #define SX1262                                      2

@@ -92,7 +92,7 @@ void SX126xInit( DioIrqHandler dioIrq )
 #if true
     CalibrationParams_t calibParam;
 
-    SX126xSetDio3AsTcxoCtrl( TCXO_CTRL_2_7V, 0xA000 ); // convert from ms to SX126x time base
+    SX126xSetDio3AsTcxoCtrl( TCXO_CTRL_2_7V, 0xF0); // convert from ms to SX126x time base
     calibParam.Value = 0x7F;
     SX126xCalibrate( calibParam );
 #endif
@@ -219,9 +219,9 @@ uint32_t SX126xGetRandom( void )
 
 void SX126xSetSleep( SleepParams_t sleepConfig )
 {
-    //SX126xAntSwOff( );
-    //SX126xWriteCommand( RADIO_SET_SLEEP, &sleepConfig.Value, 1 );
-    //OperatingMode = MODE_SLEEP;
+    SX126xAntSwOff( );
+    SX126xWriteCommand( RADIO_SET_SLEEP, &sleepConfig.Value, 1 );
+    OperatingMode = MODE_SLEEP;
 }
 
 void SX126xSetStandby( RadioStandbyModes_t standbyConfig )
@@ -443,7 +443,6 @@ void SX126xSetRfFrequency( uint32_t frequency )
 void SX126xSetPacketType( RadioPacketTypes_t packetType )
 {
     // Save packet type internally to avoid questioning the radio
-    //printf("setting packet type: %u \n", packetType);
     PacketType = packetType;
     SX126xWriteCommand( RADIO_SET_PACKETTYPE, ( uint8_t* )&packetType, 1 );
 }

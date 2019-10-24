@@ -647,9 +647,9 @@ void RadioSetRxConfig( RadioModems_t modem, uint32_t bandwidth,
             break;
 
         case MODEM_LORA:
-          SX126xSetStopRxTimerOnPreambleDetect( false );
-          SX126xSetLoRaSymbNumTimeout( 0 );
-          printf("skipping setting timeout for %u symbols \n", symbTimeout);
+            SX126xSetStopRxTimerOnPreambleDetect( false );
+            SX126xSetLoRaSymbNumTimeout( 0 );
+            dbprintf("skipping setting timeout for %u symbols \n", symbTimeout);
             SX126x.ModulationParams.PacketType = PACKET_TYPE_LORA;
             SX126x.ModulationParams.Params.LoRa.SpreadingFactor = ( RadioLoRaSpreadingFactors_t )datarate;
             SX126x.ModulationParams.Params.LoRa.Bandwidth = Bandwidths[bandwidth];
@@ -855,11 +855,11 @@ void RadioSend( uint8_t *buffer, uint8_t size )
     }
     SX126xSetPacketParams( &SX126x.PacketParams );
 
-    printf("Sending msg payload: ");
+    dbprintf("Sending msg payload: ");
     for(int i = 0; i < size; i++){
-      printf("%01X", buffer[i]);
+      dbprintf("%01X", buffer[i]);
     }
-    printf("\n");
+    dbprintf("\n");
 
     SX126xSendPayload( buffer, size, 0 );
     TimerSetValue( &TxTimeoutTimer, TxTimeout );
@@ -871,7 +871,7 @@ void RadioSleep( void )
     SleepParams_t params = { 0 };
 
     params.Fields.WarmStart = 1;
-    //SX126xSetSleep( params );
+    SX126xSetSleep( params );
 
     DelayMs( 2 );
 }
@@ -912,7 +912,7 @@ void RadioRxBoosted( uint32_t timeout )
                            IRQ_RADIO_NONE );
 
     if( timeout != 0 )
-    {    
+    {
         TimerSetValue( &RxTimeoutTimer, timeout );
         TimerStart( &RxTimeoutTimer );
     }
@@ -1038,17 +1038,15 @@ void RadioOnTxTimeoutIrq( void* ctx )
 
 void RadioOnRxTimeoutIrq( void* ctx )
 {
-  printf("RADIO RX TIMEOUT TRIGGER! \n");
     if( ( RadioEvents != NULL ) && ( RadioEvents->RxTimeout != NULL ) )
     {
-      printf("RADIO RX TIMEOUT EVENT! \n");
         RadioEvents->RxTimeout( );
     }
 }
 
 void RadioOnDioIrq( void )
 {
-    printk("IRQQ!!\n");
+    dbprintk("IRQ!!\n");
     IrqFired = true;
 }
 
@@ -1056,7 +1054,7 @@ void RadioIrqProcess( void )
 {
     if( IrqFired == true )
     {
-        printf("IRQ process!\n");
+        dbprintf("IRQ process!\n");
         BoardDisableIrq( );
         IrqFired = false;
         BoardEnableIrq( );

@@ -904,6 +904,7 @@ LoRaMacStatus_t RegionEU868NextChannel( NextChanParams_t* nextChanParams, uint8_
     }
 
     TimerTime_t elapsed = TimerGetElapsedTime( nextChanParams->LastAggrTx );
+    dbprintf("elapsed: %u, lastAggrTx: %u, aggrTimeOff: %u\n", elapsed, nextChanParams->LastAggrTx, nextChanParams->AggrTimeOff);
     if( ( nextChanParams->LastAggrTx == 0 ) || ( nextChanParams->AggrTimeOff <= elapsed ) )
     {
         // Reset Aggregated time off
@@ -916,17 +917,16 @@ LoRaMacStatus_t RegionEU868NextChannel( NextChanParams_t* nextChanParams, uint8_
         nbEnabledChannels = CountNbOfEnabledChannels( nextChanParams->Joined, nextChanParams->Datarate,
                                                       NvmCtx.ChannelsMask, NvmCtx.Channels,
                                                       NvmCtx.Bands, enabledChannels, &delayTx );
+        dbprintf("nextTxDelay: %u, nbEnabled %u \n", nextTxDelay, nbEnabledChannels);
     }
     else
     {
         delayTx++;
         nextTxDelay = nextChanParams->AggrTimeOff - elapsed;
+        dbprintf("delayTx: %u, nextTxDelay: %u, nbEnabled %u \n", delayTx, nextTxDelay, nbEnabledChannels);
     }
 
-
-    //TODO: ugly hack here to keep sending msg
-
-    if( true )//nbEnabledChannels > 0 )
+    if( nbEnabledChannels > 0 )
     {
         // We found a valid channel
         *channel = enabledChannels[randr( 0, nbEnabledChannels - 1 )];
@@ -940,6 +940,7 @@ LoRaMacStatus_t RegionEU868NextChannel( NextChanParams_t* nextChanParams, uint8_
         {
             // Delay transmission due to AggregatedTimeOff or to a band time off
             *time = nextTxDelay;
+            dbprintf("loramac restricted time: %u \n", nextTxDelay);
             return LORAMAC_STATUS_DUTYCYCLE_RESTRICTED;
         }
         // Datarate not supported by any channel, restore defaults

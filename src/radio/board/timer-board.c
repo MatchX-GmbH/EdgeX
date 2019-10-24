@@ -1,5 +1,9 @@
-#include "../sx126x/board.h"
+#include "timer-board.h"
 #include "rtc.h"
+
+#ifndef DEBUG_TIMERS
+#define printf(...)
+#endif
 
 static volatile rtc_t * rtc_driver = (void*)RTC_BASE_ADDR;
 
@@ -10,6 +14,7 @@ void TimerInit( TimerEvent_t *obj, void ( *callback )( void* ) ){
 
 void TimerStart( TimerEvent_t *obj ){
   printf("TimerStart %s \n", obj->name);
+  mxtimer_stop(obj->id);
   obj->id = mxtimer_start(obj->timeout, obj->callback, obj->name);
 }
 
@@ -20,7 +25,6 @@ void TimerStop( TimerEvent_t *obj ){
 
 void TimerSetValue( TimerEvent_t *obj, uint32_t value ){
   printf("TimerSetVal %s %u \n", obj->name, value);
-  //xTimerChangePeriod(obj->handle, value / portTICK_PERIOD_MS, BLOCKING_TIME);
   obj->timeout = value;
 }
 
@@ -28,7 +32,6 @@ TimerTime_t TimerGetElapsedTime( TimerTime_t savedTime ){
   return TimerGetCurrentTime() - savedTime;
 }
 
-// TODO: Not sure if this is intended implementation
 TimerTime_t TimerGetCurrentTime( void ){
   // get ms
   const uint32_t rtc_ticks_per_s = 26 * 000 * 000;

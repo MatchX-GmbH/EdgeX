@@ -638,3 +638,14 @@ int printk(const char *format, ...)
 
     return 0;
 }
+
+int vprintk(const char *format, va_list ap)
+{
+  /* Begin protected code */
+  corelock_lock(&lock);
+  tfp_format(stdout_putp, uart_putf, format, ap);
+  /* End protected code */
+  corelock_unlock(&lock);
+
+  return 0;
+}

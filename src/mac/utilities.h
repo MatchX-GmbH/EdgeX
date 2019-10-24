@@ -24,7 +24,7 @@
 #define __UTILITIES_H__
 
 #include <stdint.h>
-#include "sx126x/board.h"
+#include "board.h"
 
 /*!
  * Generic definition

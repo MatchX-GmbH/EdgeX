@@ -18,6 +18,7 @@ typedef struct mxtimer_s {
 void mxtimer_setup();
 uint32_t mxtimer_start(uint32_t timeout_ms, mxtimer_cb callback, const char * name);
 void mxtimer_stop(uint32_t timer_id);
+void mxtimer_clear_all();
 
 
 #endif

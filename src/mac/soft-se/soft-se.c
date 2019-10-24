@@ -28,6 +28,7 @@ Maintainer: Miguel Luis ( Semtech ), Gregory Cristian ( Semtech ),
 #include "aes.h"
 #include "cmac.h"
 #include "radio.h"
+#include "sx126x/sx126x.h"
 
 #define NUM_OF_KEYS      24
 #define KEY_SIZE         16

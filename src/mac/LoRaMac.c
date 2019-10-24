@@ -31,9 +31,6 @@
  * \author    Johannes Bruder ( STACKFORCE )
  */
 
-//TODO: instability workaround!
-#define printf printk
-
 #include "utilities.h"
 #include "region/Region.h"
 #include "LoRaMacClassB.h"
@@ -47,6 +44,8 @@
 #include "LoRaMacParser.h"
 #include "LoRaMacCommands.h"
 #include "LoRaMacAdr.h"
+#include "dbprintf.h"
+#include "sx126x/sx126x.h"
 
 #include "LoRaMac.h"
 
@@ -845,7 +844,7 @@ static void OnRadioRxError( void )
 
 static void OnRadioRxTimeout( void )
 {
-    printf("RADIO RX TIMEOUT EVENT! \n");
+    dbprintf("OnRadioRxTimeout\n");
     LoRaMacRadioEvents.Events.RxTimeout = 1;
 
     if( ( MacCtx.MacCallbacks != NULL ) && ( MacCtx.MacCallbacks->MacProcessNotify != NULL ) )
@@ -877,8 +876,8 @@ static void ProcessRadioTxDone( void )
         Radio.Sleep( );
     }
     // Setup timers
-    printf("Code wanted to set rx timers for %u %u \n", MacCtx.RxWindow1Delay, MacCtx.RxWindow2Delay );
-    TimerSetValue( &MacCtx.RxWindowTimer1, 4000 );
+    dbprintf("Code wanted to set rx timers for %u %u \n", MacCtx.RxWindow1Delay, MacCtx.RxWindow2Delay );
+    TimerSetValue( &MacCtx.RxWindowTimer1, MacCtx.RxWindow1Delay - 100 );
     TimerStart( &MacCtx.RxWindowTimer1 );
     TimerSetValue( &MacCtx.RxWindowTimer2, MacCtx.RxWindow2Delay );
     TimerStart( &MacCtx.RxWindowTimer2 );
@@ -912,7 +911,7 @@ static void ProcessRadioTxDone( void )
     {
         MacCtx.McpsConfirm.Status = LORAMAC_EVENT_INFO_STATUS_OK;
     }
-    printf("TX OK!\n");
+    dbprintf("TX OK!\n");
 }
 
 static void PrepareRxDoneAbort( void )
@@ -1426,31 +1425,31 @@ static void LoRaMacHandleIrqEvents( void )
 
     if( events.Value != 0 )
     {
-        printf("handling events! %u \n", events.Value);
+        dbprintf("handling events! %u \n", events.Value);
         if( events.Events.TxDone == 1 )
         {
             ProcessRadioTxDone( );
-            printf("TxDone! \n");
+            dbprintf("TxDone! \n");
         }
         if( events.Events.RxDone == 1 )
         {
             ProcessRadioRxDone( );
-            printf("RxDone! \n");
+            dbprintf("RxDone! \n");
         }
         if( events.Events.TxTimeout == 1 )
         {
             ProcessRadioTxTimeout( );
-            printf("TxTimeout! \n");
+            dbprintf("TxTimeout! \n");
         }
         if( events.Events.RxError == 1 )
         {
             ProcessRadioRxError( );
-            printf("RxError! \n");
+            dbprintf("RxError! \n");
         }
         if( events.Events.RxTimeout == 1 )
         {
             ProcessRadioRxTimeout( );
-            printf("RxTimeout! \n");
+            dbprintf("RxTimeout! \n");
         }
     }
 }
@@ -1462,7 +1461,7 @@ bool LoRaMacIsBusy( void )
     {
         return false;
     }
-    printf("mac state: %u, allow %u, \n", MacCtx.MacState, MacCtx.AllowRequests);
+    dbprintf("mac state: %u, allow %u, \n", MacCtx.MacState, MacCtx.AllowRequests);
     return true;
 }
 
@@ -2616,15 +2615,13 @@ static void ResetMacParameters( void )
 static void RxWindowSetup( TimerEvent_t* rxTimer, RxConfigParams_t* rxConfig )
 {
     TimerStop( rxTimer );
-    printf("rxTimer\n");
+    dbprintf("rxTimer\n");
     // Ensure the radio is Idle
     Radio.Standby( );
 
     if( RegionRxConfig( MacCtx.NvmCtx->Region, rxConfig, ( int8_t* )&MacCtx.McpsIndication.RxDatarate ) == true )
     {
-        printf("RCV!!!!!!!!!!!!!\n");
-        Radio.Rx(MacCtx.NvmCtx->MacParams.MaxRxWindow );
-        //SX126xSetRx(0xFFFF);
+        Radio.Rx(MacCtx.NvmCtx->MacParams.MaxRxWindow);
         MacCtx.RxSlot = rxConfig->RxSlot;
     }
 }
@@ -3138,7 +3135,7 @@ LoRaMacStatus_t LoRaMacInitialization( LoRaMacPrimitives_t* primitives, LoRaMacC
     // Verify if the region is supported
     if( RegionIsActive( region ) == false )
     {
-        printf("%s - Error: not supported region: %u\n", __FUNCTION__, region);
+        dbprintf("%s - Error: not supported region: %u\n", __FUNCTION__, region);
         return LORAMAC_STATUS_REGION_NOT_SUPPORTED;
     }
 
@@ -3283,7 +3280,7 @@ LoRaMacStatus_t LoRaMacInitialization( LoRaMacPrimitives_t* primitives, LoRaMacC
     MacCtx.RadioEvents.TxTimeout = OnRadioTxTimeout;
     MacCtx.RadioEvents.RxTimeout = OnRadioRxTimeout;
     Radio.Init( &MacCtx.RadioEvents );
-    printf("Radio init");
+    dbprintf("Radio init");
 
     InitDefaultsParams_t params;
     params.Type = INIT_TYPE_INIT;

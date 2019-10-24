@@ -92,6 +92,22 @@
 #define LED_B_FUNC              (FUNC_GPIOHS0 + LED_B_GPIO)
 
 
+#define SD_SPI_SS_PIN           20
+#define SD_SPI_SS_GPIO          17
+#define SD_SPI_SS_FUNC          FUNC_GPIOHS0 + LED_R_GPIO)
+
+#define SD_SPI_CLK_PIN           20
+#define SD_SPI_CLK_GPIO          17
+#define SD_SPI_CLK_FUNC          FUNC_GPIOHS0 + LED_R_GPIO)
+
+#define SD_SPI_MISO_PIN         19
+#define SD_SPI_MISO_GPIO        18
+#define SD_SPI_MISO_FUNC        (FUNC_GPIOHS0 + LED_G_GPIO)
+
+#define SD_SPI_MOSI_PIN         18
+#define SD_SPI_MOSI_GPIO        19
+#define SD_SPI_MOSI_FUNC        (FUNC_GPIOHS0 + LED_B_GPIO)
+
 #endif
 
 

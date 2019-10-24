@@ -1,11 +1,10 @@
 #include "sysctl.h"
 #include "ai_task.h"
 #include "lora_task.h"
-#include "atomic.h"
 #include "config.h"
+#include "fpioa.h"
 #include "gpio_common.h"
-
-
+#include "console.h"
 
 #define PLL0_OUTPUT_FREQ 800000000UL
 #define PLL1_OUTPUT_FREQ 400000000UL
@@ -20,14 +19,19 @@ int main(void)
 
     plic_init();
     sysctl_enable_irq();
-    uarths_init();
+    rtc_init();
 
     // Needed to enable debugging
     sysctl_set_power_mode(SYSCTL_POWER_BANK0, SYSCTL_POWER_V18);
     sysctl_set_spi0_dvp_data(1);
 
+    console_register();
+
+    //while(1);
     /* Start the AI processing on the second core */
     register_core1(ai_task, 0);
+
+    sleep(3);
 
     /* Execute radio sw */
     lora_task();

@@ -9,10 +9,13 @@ include("${SDK}/cmake/macros.internal.cmake")
 
 include_directories(${SDK}/lib/arch/include ${SDK}/lib/utils/include ${SDK}/lib/bsp/include ${SDK}/lib/hal/include)
 include_directories(
-                    src/ src/radio src/mac src/utility
+                    src/
+                    src/radio src/radio/board
+                    src/mac
+                    src/utility
                     src/tasks/ai
                     src/tasks/lora src/tasks/lora/LmHandler src/tasks/lora/LmHandler/packages
-                    src/drivers/lcd src/drivers/camera
+                    src/drivers/lcd src/drivers/camera src/drivers/sd src/drivers/flash
                    )
 
 

@@ -200,6 +200,7 @@ auto tfp_printf(Args &&... args) -> decltype(::tfp_printf(std::forward<Args>(arg
 #endif
 
 int printk(const char *format, ...) _TFP_SPECIFY_PRINTF_FMT(1, 2);
+int vprintk(const char *format, va_list ap);
 
 #ifdef __cplusplus
 }

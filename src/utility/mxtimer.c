@@ -2,18 +2,15 @@
 #include <stdint.h>
 #include "mxtimer.h"
 
-//TODO: instability workaround!
-#define printf printk
-
 #define mxtimer_count 8
 static const uint16_t mxtimer_freq_hz = 100;
 static const timer_device_number_t mxtimer_hw_timer_dev = TIMER_DEVICE_0;
 static const timer_channel_number_t mxtimer_hw_timer_ch = TIMER_CHANNEL_0;
 static const uint8_t mxtimer_irq_prio = 1;
 
-const uint32_t interval_ns = 1000 * 1000 * 1000 / mxtimer_freq_hz;
-const float interval_ms = (float)interval_ns / (1000 * 1000);
-const float ticks_per_ms = 1.f / interval_ms;
+static const uint32_t interval_ns = 1000 * 1000 * 1000 / mxtimer_freq_hz;
+static const float interval_ms = (float)interval_ns / (1000 * 1000);
+static const float ticks_per_ms = 1.f / interval_ms;
 
 static mxtimer_t timer_array[mxtimer_count];
 static mxtimer_t* free_head = NULL;
@@ -23,19 +20,21 @@ static uint64_t current_tick = 0;
 static uint64_t id_count = 0;
 
 static void dump_timers(){
-  /* printf("\n\n\nTO_EXPIRE:\n"); */
-  /* mxtimer_t* head = expiration_head; */
-  /* while(head){ */
-  /*   printf("name: %s, expiration %u, cb 0x%08x \n", head->name, head->expiration, head->callback); */
-  /*   head = head->next; */
-  /* } */
-  /* printf("\n\nFREE:\n"); */
-  /* head = free_head; */
-  /* while(head){ */
-  /*   printf("name: %s, expiration %u, cb 0x%08x \n", head->name, head->expiration, head->callback); */
-  /*   head = head->next; */
-  /* } */
-  /* printf("\n\n\n"); */
+#if DUMP_TIMERS
+  dbprintk("\n\n\nTO_EXPIRE:\n");
+  mxtimer_t* head = expiration_head;
+  while(head){
+    dbprintk("name: %s, expiration %u, cb 0x%08x \n", head->name, head->expiration, head->callback);
+    head = head->next;
+  }
+  dbprintk("\n\nFREE:\n");
+  head = free_head;
+  while(head){
+    dbprintk("name: %s, expiration %u, cb 0x%08x \n", head->name, head->expiration, head->callback);
+    head = head->next;
+  }
+  dbprintk("\n\n\n");
+#endif
 }
 
 void mxtimer_timeout(void * ctx){
@@ -50,11 +49,7 @@ void mxtimer_timeout(void * ctx){
 
       mxtimer_t* expired = expiration_head;
 
-      printk("timer shot %s! at %u \n", expired->name, (uint32_t)expired->callback);
-      if(expired->callback == 0){
-        printf("we done messed up\n");
-        while(1);
-      }
+      dbprintk("timer shot %s! at %u \n", expired->name, (uint32_t)expired->callback);
 
       expiration_head = expired->next;
       expired->next = free_head;
@@ -80,10 +75,10 @@ void mxtimer_setup(){
 
   timer_init(mxtimer_hw_timer_dev);
   timer_set_interval(mxtimer_hw_timer_dev, mxtimer_hw_timer_ch, interval_ns);
-  printf("setting interval %u \n", interval_ns);
+  dbprintk("setting interval %u \n", interval_ns);
   timer_irq_register(mxtimer_hw_timer_dev, mxtimer_hw_timer_ch, not_single_shot,
                      mxtimer_irq_prio, mxtimer_timeout, null_ctx);
-  timer_set_enable(mxtimer_hw_timer_dev, mxtimer_hw_timer_ch, 1);
+  timer_set_enable(mxtimer_hw_timer_dev, mxtimer_hw_timer_ch, 10);
 
   for(int i = 0; i < mxtimer_count - 1; ++i){
     timer_array[i].next = timer_array + i + 1;
@@ -107,7 +102,7 @@ uint32_t mxtimer_start(uint32_t timeout_ms, mxtimer_cb callback, const char* nam
     timer->callback = callback;
     timer->name = name;
     timer->id = timer_id = ++id_count;
-    printk("timeout in %u\n", (uint32_t)(timeout_ms * ticks_per_ms) );
+    dbprintk("timeout in %u\n", (uint32_t)(timeout_ms * ticks_per_ms) );
 
     if(expiration_head == NULL || expiration_head->expiration >= timer->expiration){
       timer->next = expiration_head;
@@ -139,9 +134,9 @@ void mxtimer_stop(uint32_t timer_id){
     if(head->id == timer_id){
 
       if(head->next){
-        printf("stopped timer %s with next cb %u \n", head->name, (uint32_t)head->next->callback);
+        dbprintk("stopped timer %s with next cb %u \n", head->name, (uint32_t)head->next->callback);
       }else{
-        printf("stopped timer with no next \n", head->name);
+        dbprintk("stopped timer with no next \n", head->name);
       }
 
       if(previous){
@@ -160,4 +155,20 @@ void mxtimer_stop(uint32_t timer_id){
   sysctl_enable_irq();
 
   dump_timers();
+}
+
+void mxtimer_clear_all(){
+  sysctl_disable_irq();
+
+  if(expiration_head){
+      mxtimer_t* last_to_expire = expiration_head;
+      while(last_to_expire->next)
+        last_to_expire = last_to_expire->next;
+
+      last_to_expire->next = free_head;
+      free_head = expiration_head;
+      expiration_head = NULL;
+  }
+
+  sysctl_enable_irq();
 }
