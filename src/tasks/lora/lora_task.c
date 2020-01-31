@@ -39,8 +39,6 @@
 #include "NvmCtxMgmt.h"
 #include "LmHandlerMsgDisplay.h"
 
-#define REGION_EU868
-
 #ifndef ACTIVE_REGION
 
 #warning "No active region defined, LORAMAC_REGION_EU868 will be used as default."
@@ -326,6 +324,8 @@ static void JoinNetwork( void )
     }
 }
 
+void lora_app_generate_payload(uint8_t* payload, uint8_t* payload_size);
+
 /*!
  * \brief   Prepares the payload of the frame
  */
@@ -335,23 +335,8 @@ static void PrepareTxFrame( uint8_t port )
     {
     case 2:
         {
-            // just a quick and dirty debug
-            extern uint8_t ai_person_count;
-            AppDataSizeBackup = AppDataSize = 2;
-            AppDataBuffer[0] = ai_person_count;
-            if(ai_person_count == 1){
-              gpiohs_set_pin(LED_R_GPIO, GPIO_PV_LOW);
-              gpiohs_set_pin(LED_G_GPIO, GPIO_PV_HIGH);
-              gpiohs_set_pin(LED_B_GPIO, GPIO_PV_LOW);
-            }else if (ai_person_count == 0){
-              gpiohs_set_pin(LED_R_GPIO, GPIO_PV_LOW);
-              gpiohs_set_pin(LED_G_GPIO, GPIO_PV_LOW);
-              gpiohs_set_pin(LED_B_GPIO, GPIO_PV_HIGH);
-            }else{
-              gpiohs_set_pin(LED_R_GPIO, GPIO_PV_HIGH);
-              gpiohs_set_pin(LED_G_GPIO, GPIO_PV_HIGH);
-              gpiohs_set_pin(LED_B_GPIO, GPIO_PV_LOW);
-            }
+            lora_app_generate_payload(AppDataBuffer, &AppDataSize);
+            AppDataSizeBackup = AppDataSize;
         }
         break;
     case 224:

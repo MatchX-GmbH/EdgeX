@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.7)
 
-set(SDK "/home/kuba/sw/ai-node-fw-stdln/sdk/kendryte-standalone-sdk")
-set(TOOLCHAIN "/home/kuba/sw/kendryte-toolchain/bin")
+set(SDK "sdk/kendryte-standalone-sdk")
+#set(TOOLCHAIN "/home/kuba/sw/kendryte-toolchain/bin")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include("${SDK}/cmake/common.cmake")
 project(ai-node-fw)
 include("${SDK}/cmake/macros.internal.cmake")
+
+if(APP STREQUAL "parking")
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DAPP_PARKING")
+else()
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DAPP_PERSON")
+endif()
 
 include_directories(${SDK}/lib/arch/include ${SDK}/lib/utils/include ${SDK}/lib/bsp/include ${SDK}/lib/hal/include)
 include_directories(

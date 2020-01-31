@@ -9,11 +9,11 @@ This project is intended as a starting point for development of solutions based 
 
 ### Steps
 1. mkdir build; cd build;
-2. cmake .. -DTOOLCHAIN="path/to/toolchain"
+2. cmake .. -DTOOLCHAIN="path/to/toolchain" -DAPP=person
 3. make
 
 ### Flashing
-When the project is compiled, we can use KFlash GUI to upload it to flash memory. First, choose ai-node-fw.bin from ./build directory and specify target address to 0x0. Additionally, for human detection demo, you need to upload neural network. To do that, choose file ./src/tasks/ai/yolo.kmodel and specify the target address to be "0x800000". Board can be set to "Auto", "Burn To" parameter should be set to "Flash". Recommended baudrate is 3000000.
+When the project is compiled, we can use KFlash GUI to upload it to flash memory. First, choose ai-node-fw.bin from ./build directory and specify target address to 0x0. Additionally, for human detection demo, you need to upload neural network. To do that, choose file ./src/tasks/apps/ai/yolo.kmodel and specify the target address to be "0x800000". Board can be set to "Auto", "Burn To" parameter should be set to "Flash". Recommended baudrate is 2'500'000.
 
 ## Configuration
 After connecting the Dev Kit to PC via usb cable, we can access the configuration and debug interface via UART. Henceforth, we can connect to the serial interface. For example, on Linux "minicom -D /dev/ttyUSB0"" could be used. The baudrate is 115200. There we can check and change the configuration of our module. All available commands can be checked by typing "help".
@@ -35,6 +35,36 @@ OpenOCD can be used - reference: https://github.com/kendryte/openocd-kendryte
         
 ## Model development
 Kendryte K210 KPU can run neural network models in .kmodel format. Conversion can be done from Tensorflow Lite fromat by using [nncase](https://github.com/kendryte/nncase). Guide on how to train a network for K210 can be found [here](https://github.com/kendryte/tensorflow-workspace).
+
+## Writing an app
+### Creating a custom solution based on this repo can be kick-started by the following steps:
+
+1. Create a directory for your app in src/tasks/apps.
+2. Update the / and /src/tasks/apps CMake files:
+
+```
+if(APP STREQUAL "parking")
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DAPP_PARKING")
+elseif(APP STREQUAL "my_new_app")
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DAPP_MY_NEW_APP")
+endif()
+```
+
+```
+if(APP STREQUAL "parking")
+  add_subdirectory(parking)
+elseif(APP STREQUAL "my_new_app")
+  add_subdirectory(my_new_app)
+endif()
+```
+
+3. In your apps directory, create a CMakeLists.txt and source file with definitions for the following symbols:
+    1. ai_app_init() - initialize the ai task context
+    2. ai_app_process() - process a unit of input
+    3. lora_app_generate_payload(uint8_t*, uint8_t*) - prepare the message to send over LoRa based on the AI output
+
+4. To compile your app, you now need to provide its name when invoking the cmake -DAPP=my_new_app DTOOLCHAIN=/path ..
+
 
 
 ## Recommended reading

@@ -16,7 +16,7 @@ void dbprintk(const char* fmt, ...)
 
   va_list args;
   va_start(args, fmt);
-  vprintk(fmt, args);
+  //vprintk(fmt, args);
   va_end(args);
 }
 
@@ -27,7 +27,7 @@ void dbprint_enable(char** args, size_t count){
   pconfig.print_debug = true;
   pconfig_save();
 
-  printf("Debug prints enabled!");
+  printf("Debug prints enabled!\n");
 }
 
 void dbprint_disable(char** args, size_t count){
@@ -35,5 +35,5 @@ void dbprint_disable(char** args, size_t count){
   pconfig.print_debug = false;
   pconfig_save();
 
-  printf("Debug prints disabled!");
+  printf("Debug prints disabled!\n");
 }

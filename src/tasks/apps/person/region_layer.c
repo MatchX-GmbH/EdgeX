@@ -382,9 +382,6 @@ void region_layer_run(region_layer_t *rl, obj_info_t *obj_info)
 
 extern uint8_t ai_person_count;
 
-#include "config.h"
-#include "gpio_common.h"
-
 void region_layer_draw_boxes(region_layer_t *rl, callback_draw_box callback)
 {
     uint32_t image_width = rl->image_width;

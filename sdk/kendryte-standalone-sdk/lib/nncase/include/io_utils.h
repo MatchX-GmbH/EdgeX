@@ -13,20 +13,22 @@
  * limitations under the License.
  */
 #pragma once
-#include <filesystem>
+#include <boost/filesystem.hpp>
 #include <fstream>
 #include <vector>
 
 namespace nncase
 {
-inline std::vector<uint8_t> read_file(const std::filesystem::path &filename)
+inline std::vector<uint8_t> read_file(const boost::filesystem::path &filename)
 {
-    std::ifstream infile(filename, std::ios::binary | std::ios::in);
+    std::ifstream infile(filename.c_str(), std::ios::binary | std::ios::in);
     if (!infile.good())
         throw std::runtime_error("Cannot open file: " + filename.string());
 
     infile.seekg(0, std::ios::end);
     size_t length = infile.tellg();
+    if (!length)
+        throw std::runtime_error("Invalid file: " + filename.string());
     infile.seekg(0, std::ios::beg);
     std::vector<uint8_t> data(length);
     infile.read(reinterpret_cast<char *>(data.data()), length);

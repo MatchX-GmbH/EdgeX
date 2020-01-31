@@ -11,6 +11,7 @@
 #include "kpu.h"
 #include "printf.h"
 #include "nncase.h"
+#include "utils.h"
 
 #define LAYER_BURST_SIZE 12
 
@@ -1004,8 +1005,9 @@ static void kpu_quantize(const kpu_model_quantize_layer_argument_t *arg, kpu_mod
 {
     size_t count = arg->count;
     const float *src = (const float *)(ctx->main_buffer + arg->main_mem_in_address);
-    ;
-    const kpu_model_quant_param_t q = arg->quant_param;
+
+    kpu_model_quant_param_t q = arg->quant_param;
+
     float scale = 1.f / q.scale;
 
     uint8_t *dest = (uint8_t *)(ctx->main_buffer + arg->mem_out_address);
@@ -1026,7 +1028,7 @@ static void kpu_kmodel_dequantize(const kpu_model_dequantize_layer_argument_t *a
     const uint8_t *src = (const uint8_t *)(ctx->main_buffer + arg->main_mem_in_address);
     float *dest = (float *)(ctx->main_buffer + arg->main_mem_out_address);
     size_t oc, count = arg->count;
-    const kpu_model_quant_param_t q = arg->quant_param;
+    kpu_model_quant_param_t q = arg->quant_param;
 
     for(oc = 0; oc < count; oc++)
         dest[oc] = *src++ * q.scale + q.bias;
@@ -1132,7 +1134,10 @@ static void kpu_kmodel_fully_connected(const kpu_model_fully_connected_layer_arg
     const float *src = (const float *)(ctx->main_buffer + arg->main_mem_in_address);
     float *dest = (float *)(ctx->main_buffer + arg->main_mem_out_address);
     uint32_t in_channels = arg->in_channels, out_channels = arg->out_channels, ic, oc;
-    const float *weights = arg->weights, *bias = arg->weights + in_channels * out_channels;
+    float *weights = (float *)malloc(in_channels * out_channels * sizeof(float));
+    float *bias = (float *)malloc(out_channels * sizeof(float));
+    memcpy(weights, arg->weights, out_channels * in_channels * sizeof(float));
+    memcpy(bias, arg->weights + in_channels * out_channels, out_channels * sizeof(float));
 
     if(in_channels % 8 == 0)
     {
@@ -1179,7 +1184,8 @@ static void kpu_kmodel_fully_connected(const kpu_model_fully_connected_layer_arg
             dest[oc] = sum + bias[oc];
         }
     }
-
+    free(weights);
+    free(bias);
     kpu_float_activation(dest, out_channels, arg->act);
 }
 
@@ -1263,9 +1269,9 @@ static void kpu_logistic(const kpu_model_logistic_layer_argument_t *arg, kpu_mod
 static void kpu_conv(const kpu_model_conv_layer_argument_t *arg, kpu_model_context_t *ctx)
 {
     volatile kpu_layer_argument_t layer = *(const volatile kpu_layer_argument_t *)(ctx->model_buffer + arg->layer_offset);
-    layer.kernel_load_cfg.data.para_start_addr = (uintptr_t)(ctx->model_buffer + arg->weights_offset);
-    layer.kernel_pool_type_cfg.data.bwsx_base_addr = (uintptr_t)(ctx->model_buffer + arg->bn_offset);
-    layer.kernel_calc_type_cfg.data.active_addr = (uintptr_t)(ctx->model_buffer + arg->act_offset);
+    layer.kernel_load_cfg.data.para_start_addr = (uintptr_t)(ctx->model_buffer + arg->weights_offset) - IOMEM;
+    layer.kernel_pool_type_cfg.data.bwsx_base_addr = (uintptr_t)(ctx->model_buffer + arg->bn_offset) - IOMEM;
+    layer.kernel_calc_type_cfg.data.active_addr = (uintptr_t)(ctx->model_buffer + arg->act_offset) - IOMEM;
 
     if(arg->flags & KLF_MAIN_MEM_OUT)
     {
@@ -1357,6 +1363,9 @@ static void kpu_upload(const kpu_model_upload_layer_argument_t *arg, kpu_model_c
 
 int kpu_load_kmodel(kpu_model_context_t *ctx, const uint8_t *buffer)
 {
+#if FIX_CACHE
+    configASSERT(is_memory_cache((uintptr_t)buffer));
+#endif
     uintptr_t base_addr = (uintptr_t)buffer;
     const kpu_kmodel_header_t *header = (const kpu_kmodel_header_t *)buffer;
 
@@ -1372,6 +1381,20 @@ int kpu_load_kmodel(kpu_model_context_t *ctx, const uint8_t *buffer)
         ctx->main_buffer = (uint8_t *)malloc(header->main_mem_usage);
         if(!ctx->main_buffer)
             return -1;
+        uint32_t body_size = 0;
+        for(int i=0; i<ctx->layers_length; i++)
+        {
+            const kpu_model_layer_header_t *cnt_layer_header = ctx->layer_headers + i;
+            body_size += cnt_layer_header->body_size;
+        }
+        uint8_t *body_start_iomem = (uint8_t *)((uintptr_t)ctx->body_start - IOMEM);
+        const uint8_t *body_start_cache = ctx->body_start;
+        memcpy(body_start_iomem, body_start_cache, body_size);
+        for(int i=0; i<body_size; i++)
+        {
+            configASSERT(body_start_iomem[i] == body_start_cache[i]);
+        }
+        
     } else if(header->version == 'KMDL')
     {
         return nncase_load_kmodel(ctx, buffer);

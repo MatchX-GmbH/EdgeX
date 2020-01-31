@@ -16,10 +16,14 @@
 #define _OV2640_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define OV2640_ADDR         0x60
 
 int ov2640_init(void);
+void ov_2640_set_framesize(bool uxga, uint16_t width, uint16_t height,
+                           uint16_t x_offset, uint16_t y_offset,
+                           uint16_t out_width, uint16_t out_height);
 int ov2640_read_id(uint16_t *manuf_id, uint16_t *device_id);
 
 #endif /* _OV2640_H */

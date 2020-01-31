@@ -16,6 +16,7 @@
 #include <kernels/k210/k210_kernels.h>
 #include <runtime/target_interpreter.h>
 #include <stdio.h>
+#include <cstring>
 
 using namespace nncase;
 using namespace nncase::runtime;
@@ -29,7 +30,7 @@ void kpu_upload_dma(dmac_channel_number_t dma_ch, const uint8_t *src, uint8_t *d
     dmac_set_irq(dma_ch, callback, userdata, 1);
     dmac_set_single_mode(dma_ch, (void *)src, (void *)dest, DMAC_ADDR_INCREMENT, DMAC_ADDR_INCREMENT,
         DMAC_MSIZE_16, DMAC_TRANS_WIDTH_64, input_size / 8);
-    usleep(1);
+    dmac_wait_done(dma_ch);
 }
 }
 
@@ -38,7 +39,22 @@ class nncase_context
 public:
     int load_kmodel(const uint8_t *buffer)
     {
-        return interpreter_.try_load_model(buffer) ? 0 : -1;
+        int ret = interpreter_.try_load_model(buffer) ? 0 : -1;
+
+        uint32_t size = interpreter_.model_size(buffer);
+        uint8_t *buffer_iomem = (uint8_t *)((uintptr_t)buffer - IOMEM);
+        const uint8_t *buffer_cache = buffer;
+        memcpy(buffer_iomem, buffer_cache, size);
+        for (int i = 0; i < size; i++)
+        {
+            if (buffer_iomem[i] != buffer_cache[i])
+            {
+                printf("flush model fail:%d %x %x \n", i, buffer_iomem[i], buffer_cache[i]);
+                while (1)
+                    ;
+            }
+        }
+        return ret;
     }
 
     int get_output(uint32_t index, uint8_t **data, size_t *size)
@@ -60,6 +76,23 @@ public:
 
         auto input = interpreter_.input_at(0);
         auto mem = interpreter_.memory_at<uint8_t>(input);
+
+
+        //printf("ai input size: %u\n", mem.size());
+
+
+        // for(size_t i = 0; i < 100; i++){
+        //   printf("%u ", src[i]);
+        // }
+        // printf("\n");
+
+        // printf("smth\n");
+        // for(size_t i = 0; i < std::min<size_t>(mem.size(), 100); i++){
+        //   printf("%u ", mem[i]);
+        // }
+        // printf("\n");
+
+
         if (input.memory_type == mem_main)
         {
             std::copy(src, src + mem.size(), mem.begin());
@@ -71,7 +104,8 @@ public:
             auto shape = interpreter_.input_shape_at(0);
             if (shape[3] % 64 == 0)
             {
-                kpu_upload_dma(dma_ch, src, mem.data(), mem.size(), upload_done_thunk, this);
+                kpu_upload_dma(dma_ch, src, mem.data(), mem.size(), nullptr, this);
+                on_upload_done();
             }
             else
             {

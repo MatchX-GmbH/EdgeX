@@ -4,6 +4,7 @@
 #include <uart.h>
 #include <sysctl.h>
 #include "console.h"
+#include "pconfig.h"
 
 #define BUFFER_SIZE 127
 #define MAX_ARGS 16
@@ -45,6 +46,15 @@ DECLARE_COMMAND(lora_stop);
 DECLARE_COMMAND(dbprint_enable);
 DECLARE_COMMAND(dbprint_disable);
 
+DECLARE_COMMAND(echo_enable);
+DECLARE_COMMAND(echo_disable);
+
+DECLARE_COMMAND(camera_download);
+DECLARE_COMMAND(camera_set_res);
+
+DECLARE_COMMAND(parking_reset);
+DECLARE_COMMAND(parking_get);
+DECLARE_COMMAND(parking_set);
 
 static command_t commands[] =
 {
@@ -71,6 +81,11 @@ static command_t commands[] =
  {"debug print disable", dbprint_disable,
   "Disable additional printouts"},
 
+ {"echo enable", echo_enable,
+  "Print back the input characters"},
+ {"echo disable", echo_disable,
+  "Disable the echo"},
+
  {"lora cnt", lora_cnt,
   "Start continous wave with params:\n"
   "\tlora cnt,<freq Hz>,<power dB>"},
@@ -84,6 +99,24 @@ static command_t commands[] =
   "\tBandwidth value: 0 - 125Hz, 1 - 250Hz, 2 - 500Hz"},
  {"lora stop", lora_stop,
   "Stop transmission and receiving"},
+
+// TODO: find a way to decouple custom commands from this file
+#ifdef APP_PARKING
+ {"camera download", camera_download,
+  "Send image data over UART"},
+ {"camera set res", camera_set_res,
+  "Set camera capture resolution, window, offset and dvi output, in pixels:\n"
+  "\tcamera set res,<resolution [SVGA/UXGA]>,<window_width>,<window_height>,"
+  "<window_offset_x>,<window_offset_y>,<dvi_output_width>,<dvi_output_height>"},
+
+ {"parking reset", parking_reset,
+  "Reset parking configuration"},
+ {"parking get", parking_get,
+  "Output parking configuration"},
+ {"parking set", parking_set,
+  "Set parking slot data:\n"
+  "\tparking set,<index>,<position x>,<position y>,<size>"}
+ #endif
 };
 
 // registry end
@@ -142,35 +175,46 @@ static void process_buffer(void){
 static int console_uart_handle(void* ctx){
   char in;
   int ret = uart_receive_data(UART_DEVICE_3, &in, 1);
+  bool echo = pconfig.print_echo;
+
   if(ret){
     if(in >= 'a' && in <= 'z' ||
        in >= 'A' && in <= 'Z' ||
        in >= '0' && in <= '9' ||
        in == ' ' || in == ',' || in == ':')
     {
-        if(buffer_count < BUFFER_SIZE){
+      if(buffer_count < BUFFER_SIZE){
+        if(echo){
           printk("%c", in);
-          buffer[buffer_count++] = in;
         }
+
+        buffer[buffer_count++] = in;
+      }
     }
     else if(in == '\n' || in == '\r')
     {
+      if(echo){
         printk("\n");
-        process_buffer();
-        buffer_count = 0;
+      }
+      process_buffer();
+      buffer_count = 0;
     }
     else if(in == '\r')
     {}
     else if(in == '\b')
     {
-        if(buffer_count != 0){
-            printk("\b \b", in);
-            buffer_count--;
+      if(buffer_count != 0){
+        if(echo){
+          printk("\b \b", in);
         }
+        buffer_count--;
+      }
     }
     else
     {
+      if(echo){
         printk("?");
+      }
     }
   }
 }
@@ -190,4 +234,20 @@ int console_help(char** args, size_t count){
 
 int system_reboot(char** args, size_t count){
   sysctl_reset(SYSCTL_RESET_SOC);
+}
+
+int echo_enable(char** args, size_t count){
+  pconfig_load();
+  pconfig.print_echo = true;
+  pconfig_save();
+
+  printf("Echo enabled!\n");
+}
+
+int echo_disable(char** args, size_t count){
+  pconfig_load();
+  pconfig.print_echo = false;
+  pconfig_save();
+
+  printf("Echo disabled!\n");
 }

@@ -16,6 +16,7 @@
 #define _NT35310_H_
 
 #include <stdint.h>
+#include "config.h"
 
 /* clang-format off */
 #define NO_OPERATION            0x00
@@ -95,8 +96,8 @@
 #define DIGITAL_GAMMA_CTL2      0xE3
 #define INTERFACE_CTL           0xF6
 
-#define DCX_GPIONUM             (2)
-#define RST_GPIONUM             (0)
+#define DCX_GPIONUM             (LCD_DCX_GPIO)
+#define RST_GPIONUM             (LCD_RST_GPIO)
 
 #define SPI_CHANNEL             0
 #define SPI_SLAVE_SELECT        3

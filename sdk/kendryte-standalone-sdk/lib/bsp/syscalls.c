@@ -36,6 +36,7 @@
 #include "sysctl.h"
 #include "syslog.h"
 #include "util.h"
+#include "iomem.h"
 
 /**
  * @note       System call list
@@ -97,6 +98,8 @@ static const char *TAG = "SYSCALL";
 extern char _heap_start[];
 extern char _heap_end[];
 char *_heap_cur = &_heap_start[0];
+char *_heap_line = &_heap_start[0];
+char *_ioheap_line = &_heap_end[0]-0x40000000;
 
 sys_putchar_t sys_putchar;
 sys_getchar_t sys_getchar;
@@ -184,6 +187,16 @@ static size_t sys_brk(size_t pos)
             res = -ENOMEM;
         } else
         {
+            if((uintptr_t)pos > (uintptr_t)_heap_line)
+            {
+                _heap_line = (char *)(uintptr_t)pos;
+                if((uintptr_t)_heap_line-0x40000000 > (uintptr_t)_ioheap_line)
+                {
+                    LOGE(TAG, "Out of memory!\r\n");
+                    while(1)
+                        ;
+                }
+            }
             /* Adjust brk pointer. */
             _heap_cur = (char *)(uintptr_t)pos;
             /* Return current address. */
@@ -501,22 +514,7 @@ handle_ecall(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uintptr_t fregs
 #pragma GCC diagnostic warning "-Woverride-init"
 #endif
 
-    uintptr_t (*syscall_ptr)(long a0, long a1, long a2, long a3, long a4, long a5, unsigned long n)
-      = syscall_table[syscall_id_table[0xFF & regs[17]]];
-
-    if(syscall_ptr == (void*)sys_exit){
-      printk("handle_ecall %u 0x%08x \n", cause, epc);
-
-      for(int i = 0; i < 32; i++){
-        printk("reg %u val 0x%08x \n", i, regs[i]);
-      }
-
-      for(int i = 0; i < 32; i++){
-        printk("freg %u val 0x%16x \n", i, fregs[i]);
-      }
-    }
-
-    regs[10] = syscall_ptr(
+    regs[10] = syscall_table[syscall_id_table[0xFF & regs[17]]](
         regs[10], /* a0 */
         regs[11], /* a1 */
         regs[12], /* a2 */
@@ -758,5 +756,5 @@ uintptr_t handle_syscall(uintptr_t cause, uintptr_t epc, uintptr_t regs[32], uin
 
 size_t get_free_heap_size(void)
 {
-    return (size_t)(&_heap_end[0] - _heap_cur);
+    return (size_t)iomem_unused();
 }
