@@ -1,6 +1,9 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#define HW_VER_1V1
+//#include "i2c.h"
+
 #if false
 
 #define SX1261_SPI_NSS_PIN      30
@@ -107,6 +110,16 @@
 #define SD_SPI_MOSI_PIN         18
 #define SD_SPI_MOSI_GPIO        19
 #define SD_SPI_MOSI_FUNC        (FUNC_GPIOHS0 + LED_B_GPIO)
+
+#endif
+
+#ifdef HW_VER_1V1
+
+#define IOEXP_IO_I2C_SDA_PIN	34
+#define IOEXP_IO_I2C_SDA_FUNC	(FUNC_I2C1_SDA)
+#define IOEXP_IO_I2C_SCL_PIN	35
+#define IOEXP_IO_I2C_SCL_FUNC	(FUNC_I2C1_SCLK)
+#define IOEXP_IO_I2C_DEV		I2C_DEVICE_1
 
 #endif
 

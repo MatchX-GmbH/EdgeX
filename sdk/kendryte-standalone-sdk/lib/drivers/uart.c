@@ -133,7 +133,7 @@ void uart_debug_init(uart_device_number_t uart_channel)
         v_uart_reset_flag = true;
     }
     uart_init(s_uart_debug_channel);
-    uart_configure(s_uart_debug_channel, 1500000, 8, UART_STOP_1, UART_PARITY_NONE);
+    uart_configure(s_uart_debug_channel, 115200, 8, UART_STOP_1, UART_PARITY_NONE);
     uart_set_receive_trigger(s_uart_debug_channel, UART_RECEIVE_FIFO_1);
     if(v_uart_reset_flag)
     {

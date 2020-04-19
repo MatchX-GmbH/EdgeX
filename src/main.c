@@ -10,6 +10,7 @@
 #include "stdio.h"
 #include "sysctl.h"
 #include "spi.h"
+#include "ioexp.h"
 
 #define PLL0_OUTPUT_FREQ 800000000UL
 #define PLL1_OUTPUT_FREQ 400000000UL
@@ -59,6 +60,11 @@ int main(void)
     sysctl_set_spi0_dvp_data(1);
 
     console_register();
+    printf("Hello World!!\n");
+
+    ioexp_init();
+    ioexp_set_val(IOEXP_CAM_EN_PIN, IOEXP_CAM_EN_ON);
+    ioexp_set_val(IOEXP_LCD_EN_PIN, IOEXP_LCD_EN_ON);
 
     //while(1);
     /* Start the AI processing on the second core */
@@ -74,7 +80,7 @@ int main(void)
     //spi_slave_();
 
     while(1){
-      //printk("sleep\n");
+      printk("sleep\n");
       sleep(1);
     }
 
