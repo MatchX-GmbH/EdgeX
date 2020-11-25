@@ -4,13 +4,21 @@ This project is intended as a starting point for development of solutions based 
 ## Installation
 ### Dependencies
 * SDK - https://github.com/kendryte/kendryte-standalone-sdk
-* Toolchain and documentation - https://kendryte.com/downloads/
+* Toolchain and documentation - https://canaan.io/developer or https://github.com/kendryte/kendryte-gnu-toolchain/releases
 * KFlash GUI - https://github.com/sipeed/kflash_gui
 
-### Steps
+### Steps Linux
 1. mkdir build; cd build;
 2. cmake .. -DTOOLCHAIN="path/to/toolchain" -DAPP=person
 3. make
+
+### Steps Windows
+1. Download and install cmake and make for Windows (MinGW or GnuMake32).
+2. Make sure that make is in your system PATH.
+3. Download the repository and create 'build' folder inside. 
+4. Open cmd command line window and navigate to the created 'build' folder e.g. cd C:/ai_node/build
+5. From build directory execute: cmake -G "MinGW Makefiles" .. -DTOOLCHAIN="PATH_TO_TOOLCHAIN/kendryte-toolchain/bin" -DAPP=person
+6. make
 
 ### Flashing
 When the project is compiled, we can use KFlash GUI to upload it to flash memory. First, choose ai-node-fw.bin from ./build directory and specify target address to 0x0. Additionally, for human detection demo, you need to upload neural network. To do that, choose file ./src/tasks/apps/ai/yolo.kmodel and specify the target address to be "0x800000". Board can be set to "Auto", "Burn To" parameter should be set to "Flash". Recommended baudrate is 2'500'000.
