@@ -22,7 +22,7 @@ include_directories(
                     src/utility
                     src/tasks/ai
                     src/tasks/lora src/tasks/lora/LmHandler src/tasks/lora/LmHandler/packages
-                    src/drivers/lcd src/drivers/camera src/drivers/sd src/drivers/flash src/drivers/ioexp
+                    src/drivers/lcd src/drivers/camera src/drivers/sd src/drivers/flash src/drivers/ioexp src/drivers/adc
                    )
 
 

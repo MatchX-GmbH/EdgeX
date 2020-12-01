@@ -31,7 +31,7 @@ static uint8_t SpiInOut( Spi_t *obj, uint8_t data ){
 
   sysctl_enable_irq();
 
-  dbprintf("SPI i/o %02x %02x\n", data, rxData);
+  dbprintf("SPI i/o %02x %02x\r\n", data, rxData);
 
   return rxData;
 }
