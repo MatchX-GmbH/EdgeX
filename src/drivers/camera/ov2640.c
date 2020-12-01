@@ -414,7 +414,7 @@ int ov2640_init(void)
     uint16_t v_manuf_id;
     uint16_t v_device_id;
     ov2640_read_id(&v_manuf_id, &v_device_id);
-    printf("manuf_id:0x%04x,device_id:0x%04x\n", v_manuf_id, v_device_id);
+    printf("ov2640_init: manuf_id:0x%04x,device_id:0x%04x\r\n", v_manuf_id, v_device_id);
     uint16_t index = 0;
     for (index = 0; ov2640_config[index][0]; index++)
       dvp_sccb_send_data(OV2640_ADDR, ov2640_config[index][0], ov2640_config[index][1]);
@@ -426,7 +426,7 @@ int ov2640_init2(void)
   uint16_t v_manuf_id;
   uint16_t v_device_id;
   ov2640_read_id(&v_manuf_id, &v_device_id);
-  printf("manuf_id:0x%04x,device_id:0x%04x\n", v_manuf_id, v_device_id);
+  printf("ov2640_init2: manuf_id:0x%04x,device_id:0x%04x\r\n", v_manuf_id, v_device_id);
   uint16_t index = 0;
   for (index = 0; default_regs[index][0]; index++)
     dvp_sccb_send_data(OV2640_ADDR, default_regs[index][0], default_regs[index][1]);

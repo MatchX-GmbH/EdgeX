@@ -958,10 +958,10 @@ int lora_task( void )
     macCallbacks.NvmContextChange = NvmCtxMgmtEvent;
     macCallbacks.MacProcessNotify = OnMacProcessNotify;
 
-    dbprintf( "###### ===== Init start \n" );
+    dbprintf( "###### ===== Init start \n\r" );
 
     LoRaMacStatus_t init_status = LoRaMacInitialization( &macPrimitives, &macCallbacks, ACTIVE_REGION );
-    dbprintf( "###### ===== Init status %u\n", init_status );
+    dbprintf( "###### ===== Init status %u\n\r", init_status );
 
     DeviceState = DEVICE_STATE_RESTORE;
 

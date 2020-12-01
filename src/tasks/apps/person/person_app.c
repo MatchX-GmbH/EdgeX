@@ -87,21 +87,21 @@ void ai_app_init(){
     g_lcd_gram1 = (uint32_t *)iomem_malloc(320 * 240 * 2);
     ai_image = (uint8_t *)iomem_malloc(320 * 240 * 3);
 
-    printf("Load neural network\n");
+    printf("Load neural network\n\r");
     w25qxx_init(3, 0);
     w25qxx_enable_quad_mode();
     w25qxx_read_data(0x800000, model_data, MODEL_SIZE, W25QXX_QUAD_FAST);
 
 
     /* LCD init */
-    printf("LCD init\n");
+    printf("LCD init\r\n");
     lcd_init();
     lcd_set_direction(DIR_YX_LRUD);
     lcd_clear(BLACK);
     lcd_draw_string(136, 70, "HELLO WORLD", WHITE);
 
     /* DVP init */
-    printf("DVP init\n");
+    printf("DVP init\r\n");
     dvp_init(8);
     dvp_set_xclk_rate(24000000);
     dvp_enable_burst();
@@ -116,7 +116,7 @@ void ai_app_init(){
     dvp_disable_auto();
 
     /* DVP interrupt config */
-    printf("DVP interrupt config\n");
+    printf("DVP interrupt config\r\n");
     plic_set_priority(IRQN_DVP_INTERRUPT, 1);
     plic_irq_register(IRQN_DVP_INTERRUPT, on_irq_dvp, NULL);
     plic_irq_enable(IRQN_DVP_INTERRUPT);
@@ -125,7 +125,7 @@ void ai_app_init(){
     sysctl_enable_irq();
 
     /* system start */
-    printf("system start\n");
+    printf("system start\r\n");
     g_dvp_finish_flag = 0;
     dvp_clear_interrupt(DVP_STS_FRAME_START | DVP_STS_FRAME_FINISH);
     dvp_config_interrupt(DVP_CFG_START_INT_ENABLE | DVP_CFG_FINISH_INT_ENABLE, 1);
@@ -133,11 +133,11 @@ void ai_app_init(){
     /* init kpu */
     if (kpu_load_kmodel(&task, model_data) != 0)
     {
-        printf("\nmodel init error\n");
+        printf("\nmodel init error\r\n");
         while (1);
     }
 
-    printf("model loaded\n");
+    printf("model loaded\r\n");
 
     detect_rl.anchor_number = ANCHOR_NUM;
     detect_rl.anchor = g_anchor;

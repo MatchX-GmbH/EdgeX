@@ -11,6 +11,7 @@
 #include "sysctl.h"
 #include "spi.h"
 #include "ioexp.h"
+#include "adc_mcp3021.h"
 
 #define PLL0_OUTPUT_FREQ 800000000UL
 #define PLL1_OUTPUT_FREQ 400000000UL
@@ -45,6 +46,7 @@ int dumb_task( void ){
 
 int main(void)
 {
+    uint16_t adc_val;
     /* Set CPU and dvp clk */
     sysctl_pll_set_freq(SYSCTL_PLL0, PLL0_OUTPUT_FREQ);
     sysctl_pll_set_freq(SYSCTL_PLL1, PLL1_OUTPUT_FREQ);
@@ -66,6 +68,10 @@ int main(void)
     ioexp_set_val(IOEXP_CAM_EN_PIN, IOEXP_CAM_EN_ON);
     ioexp_set_val(IOEXP_LCD_EN_PIN, IOEXP_LCD_EN_ON);
 
+    
+
+    adc_init();
+
     //while(1);
     /* Start the AI processing on the second core */
     //ai_task();
@@ -80,7 +86,8 @@ int main(void)
     //spi_slave_();
 
     while(1){
-      printk("sleep\n\r");
+      adc_val = adc_battery_read();
+      printk("Battery Voltage = %u.%u V     sleep\n\r", adc_val/1000, adc_val % 1000);
       sleep(1);
     }
 
