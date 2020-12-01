@@ -60,7 +60,7 @@ int main(void)
     sysctl_set_spi0_dvp_data(1);
 
     console_register();
-    printf("Hello World!!\n");
+    printf("Hello World!!\n\r");
 
     ioexp_init();
     ioexp_set_val(IOEXP_CAM_EN_PIN, IOEXP_CAM_EN_ON);
@@ -80,7 +80,7 @@ int main(void)
     //spi_slave_();
 
     while(1){
-      printk("sleep\n");
+      printk("sleep\n\r");
       sleep(1);
     }
 
